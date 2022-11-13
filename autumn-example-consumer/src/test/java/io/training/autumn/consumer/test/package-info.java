@@ -1,0 +1,1 @@
+package io.training.autumn.consumer.test;
