@@ -1,0 +1,8 @@
+consumers:
+  - service: some-a
+    interfaces:
+      - name: io.training.autumn.api.SomeService
+        connections: 1
+    instances:
+      - ip: 127.0.0.1
+        port: 30880

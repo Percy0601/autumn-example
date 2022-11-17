@@ -1,8 +1,9 @@
-package io.training.autumn.consumer.test;
+package autumn.consumer.test;
 
-import cloud.micronative.autumn.core.pool.AutumnPool;
-import cloud.micronative.autumn.core.pool.impl.ConnectionConfig;
-import cloud.micronative.autumn.core.pool.impl.ConnectionFactory;
+import autumn.core.pool.AutumnPool;
+import autumn.core.pool.ConnectionFactory;
+import autumn.core.pool.impl.ConnectionConfig;
+import autumn.core.util.AutumnException;
 import io.training.autumn.api.SomeService;
 import io.training.autumn.api.User;
 import lombok.Data;
@@ -16,25 +17,23 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.junit.platform.commons.util.ExceptionUtils;
 
 import java.util.List;
 import java.util.function.Function;
 
 @Data
 @Slf4j
-public class ClientTemplate implements SomeService.Iface {
+public class ConsumerTemplate implements SomeService.Iface {
     private String service = "default/some-service";
     private String interfaceName = SomeService.class.getName();
 
-    private SomeService.Client client = null;
-    public ClientTemplate(String service) {
+    public ConsumerTemplate(String service) {
         this.service = service;
         init();
     }
 
-    public void init() {
-        Function<ConnectionConfig, ? extends TServiceClient> consumer = ( it -> {
+    private void init() {
+        Function<ConnectionConfig, ? extends TServiceClient> consumer = (it -> {
             String ip = it.getIp();
             String port = it.getPort();
             TTransport socket = new TSocket(ip, Integer.valueOf(port));
@@ -51,25 +50,47 @@ public class ClientTemplate implements SomeService.Iface {
             }
         });
         ConnectionFactory factory = ConnectionFactory.getInstance();
-        factory.registry(service, consumer);
-        AutumnPool pool =  AutumnPool.getInstance();
-
+        factory.registry(service, interfaceName, consumer);
     }
 
+    private SomeService.Client getClient() {
+        SomeService.Client client = (SomeService.Client)AutumnPool.getInstance().getConnection(service, interfaceName);
+        return client;
+    }
 
     @Override
     public String echo(String msg) {
-
-        return null;
+        try {
+            return getClient().echo(msg);
+        } catch (TException e) {
+            if(log.isDebugEnabled()) {
+                log.debug("proxy invoke exception!");
+            }
+            throw new AutumnException("proxy invoke exception!", e);
+        }
     }
 
     @Override
     public int addUser(User user) {
-        return 0;
+        try {
+            return getClient().addUser(user);
+        } catch (TException e) {
+            if(log.isDebugEnabled()) {
+                log.debug("proxy invoke exception!");
+            }
+            throw new AutumnException("proxy invoke exception!", e);
+        }
     }
 
     @Override
     public List<User> findUserByIds(List<Integer> idList){
-        return null;
+        try {
+            return getClient().findUserByIds(idList);
+        } catch (TException e) {
+            if(log.isDebugEnabled()) {
+                log.debug("proxy invoke exception!");
+            }
+            throw new AutumnException("proxy invoke exception!", e);
+        }
     }
 }
