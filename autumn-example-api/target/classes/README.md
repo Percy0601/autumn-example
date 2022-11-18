@@ -1,1 +1,0 @@
-thrift-0.9.3.exe -r -out ../java -gen java someservice.thrift

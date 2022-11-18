@@ -25,7 +25,7 @@ import java.util.function.Function;
 @Data
 @Slf4j
 public class ConsumerTemplate implements SomeService.Iface {
-    private String service = "default/some-service";
+    private String service;
     private String interfaceName = SomeService.class.getName();
 
     public ConsumerTemplate(String service) {
