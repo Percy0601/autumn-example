@@ -2,6 +2,7 @@ package autumn.consumer.test;
 
 import autumn.core.pool.AutumnPool;
 import autumn.core.pool.ConnectionFactory;
+import autumn.core.pool.impl.ConcurrentBagEntry;
 import autumn.core.pool.impl.ConnectionConfig;
 import autumn.core.util.AutumnException;
 import io.training.autumn.api.SomeService;
@@ -29,67 +30,68 @@ public class ConsumerTemplate implements SomeService.Iface {
 
     public ConsumerTemplate(String service) {
         this.service = service;
-        init();
     }
 
-    private void init() {
-        Function<ConnectionConfig, ? extends TServiceClient> consumer = (it -> {
-            String ip = it.getIp();
-            String port = it.getPort();
-            TTransport socket = new TSocket(ip, Integer.valueOf(port));
-            TTransport transport = new TFramedTransport(socket);
-            TProtocol protocol = new TBinaryProtocol(transport);
-            TMultiplexedProtocol multiplexedProtocol = new TMultiplexedProtocol(protocol, interfaceName);
-            SomeService.Client client = new SomeService.Client(multiplexedProtocol);
-            try {
-                socket.open();
-                return client;
-            } catch (TTransportException e) {
-                log.warn("init client exception, config:{}, interface:{}, exception:", it);
-                return null;
-            }
-        });
-        ConnectionFactory factory = ConnectionFactory.getInstance();
-        factory.registry(service, interfaceName, consumer);
-    }
-
-    private SomeService.Client getClient() {
-        SomeService.Client client = (SomeService.Client)AutumnPool.getInstance().getConnection(service, interfaceName);
-        return client;
-    }
 
     @Override
     public String echo(String msg) {
+        AutumnPool pool = AutumnPool.getInstance();
+        ConcurrentBagEntry entry = pool.getConnection(this.service);
+        TTransport transport = (TTransport) entry.getEntry();
+        TProtocol protocol = new TBinaryProtocol(transport);
+        TMultiplexedProtocol multiplexedProtocol = new TMultiplexedProtocol(protocol, interfaceName);
+        SomeService.Client client = new SomeService.Client(multiplexedProtocol);
         try {
-            return getClient().echo(msg);
+            String result = client.echo(msg);
+            pool.release(service, entry);
+            return result;
         } catch (TException e) {
             if(log.isDebugEnabled()) {
                 log.debug("proxy invoke exception!");
             }
+            pool.evict(service, entry);
             throw new AutumnException("proxy invoke exception!", e);
         }
     }
 
     @Override
     public int addUser(User user) {
+        AutumnPool pool = AutumnPool.getInstance();
+        ConcurrentBagEntry entry = pool.getConnection(this.service);
+        TTransport transport = (TTransport) entry.getEntry();
+        TProtocol protocol = new TBinaryProtocol(transport);
+        TMultiplexedProtocol multiplexedProtocol = new TMultiplexedProtocol(protocol, interfaceName);
+        SomeService.Client client = new SomeService.Client(multiplexedProtocol);
         try {
-            return getClient().addUser(user);
+            int result = client.addUser(user);
+            pool.release(service, entry);
+            return result;
         } catch (TException e) {
             if(log.isDebugEnabled()) {
                 log.debug("proxy invoke exception!");
             }
+            pool.evict(service, entry);
             throw new AutumnException("proxy invoke exception!", e);
         }
     }
 
     @Override
     public List<User> findUserByIds(List<Integer> idList){
+        AutumnPool pool = AutumnPool.getInstance();
+        ConcurrentBagEntry entry = pool.getConnection(this.service);
+        TTransport transport = (TTransport) entry.getEntry();
+        TProtocol protocol = new TBinaryProtocol(transport);
+        TMultiplexedProtocol multiplexedProtocol = new TMultiplexedProtocol(protocol, interfaceName);
+        SomeService.Client client = new SomeService.Client(multiplexedProtocol);
         try {
-            return getClient().findUserByIds(idList);
+            List<User> result = client.findUserByIds(idList);
+            pool.release(service, entry);
+            return result;
         } catch (TException e) {
             if(log.isDebugEnabled()) {
                 log.debug("proxy invoke exception!");
             }
+            pool.evict(service, entry);
             throw new AutumnException("proxy invoke exception!", e);
         }
     }

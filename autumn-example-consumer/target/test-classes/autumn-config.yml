@@ -1,8 +1,9 @@
 consumers:
-  - service: some-a
-    interfaces:
-      - name: io.training.autumn.api.SomeService
-        connections: 1
+  - service: default/some-service
+    poolTimeout: 1000
+    connectionTimeout: 1000
+    socketTimeout: 1000
     instances:
       - ip: 127.0.0.1
         port: 30880
+        connections: 1
