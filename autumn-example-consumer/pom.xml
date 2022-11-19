@@ -30,5 +30,10 @@
       <artifactId>autumn-core</artifactId>
       <version>2.6.12-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

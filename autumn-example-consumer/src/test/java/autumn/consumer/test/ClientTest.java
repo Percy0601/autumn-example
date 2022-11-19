@@ -33,7 +33,7 @@ public class ClientTest {
         ExecutorService es = Executors.newFixedThreadPool(10);
 
         List<Future<String>> futureList = new ArrayList<>();
-        for(int i = 0; i < 10000; i++) {
+        for(int i = 0; i < 1000000; i++) {
             Future<String> future = es.submit(() -> {
                 String result = template.echo("world");
                 return result;
@@ -41,10 +41,10 @@ public class ClientTest {
             futureList.add(future);
         }
 
-        futureList.forEach(it -> {
+        futureList.parallelStream().forEach(it -> {
             try {
                 String result = it.get();
-                log.info("================, result:{}", result);
+                //log.info("================, result:{}", result);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (ExecutionException e) {

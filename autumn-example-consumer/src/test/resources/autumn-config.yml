@@ -6,4 +6,4 @@ consumers:
     instances:
       - ip: 127.0.0.1
         port: 30880
-        connections: 1
+        connections: 10
